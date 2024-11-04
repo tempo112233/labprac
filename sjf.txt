@@ -1,0 +1,97 @@
+#include <iostream>
+#include <vector>
+#include <limits.h>
+using namespace std;
+
+struct Process {
+    int pid;  // Process ID
+    int bt;   // Burst Time
+    int art;  // Arrival Time
+};
+
+// Function to calculate waiting time
+void findWaitingTime(Process proc[], int n, int wt[]) {
+    int rt[n]; // Remaining time array
+    for (int i = 0; i < n; i++)
+        rt[i] = proc[i].bt; // Initialize remaining time
+
+    int complete = 0, t = 0, minm = INT_MAX;
+    int shortest = 0, finish_time;
+    bool check = false;
+
+    while (complete != n) {
+        for (int j = 0; j < n; j++) {
+            // Check for the process with the shortest remaining time that has arrived
+            if ((proc[j].art <= t) && (rt[j] < minm) && rt[j] > 0) {
+                minm = rt[j];
+                shortest = j;
+                check = true;
+            }
+        }
+
+        if (!check) {
+            t++; // No process is ready, just advance time
+            continue;
+        }
+
+        // Execute the selected process for one time unit
+        rt[shortest]--;
+        minm = rt[shortest];
+        if (minm == 0)
+            minm = INT_MAX; // Reset for next iteration
+
+        // If the process is completed
+        if (rt[shortest] == 0) {
+            complete++;
+            check = false;
+            finish_time = t + 1;
+            wt[shortest] = finish_time - proc[shortest].bt - proc[shortest].art;
+            if (wt[shortest] < 0) {
+                wt[shortest] = 0; // Waiting time cannot be negative
+            }
+        }
+        t++; // Increment time
+    }
+}
+
+// Function to calculate turnaround time
+void findTurnAroundTime(Process proc[], int n, int wt[], int tat[]) {
+    for (int i = 0; i < n; i++)
+        tat[i] = proc[i].bt + wt[i]; // TAT = BT + WT
+}
+
+// Function to calculate average times
+void findAvgTime(int n) {
+    Process proc[n];
+    for (int i = 0; i < n; i++) {
+        cout << "Enter details for Process " << i + 1 << ":" << endl;
+        cout << "Process ID: ";
+        cin >> proc[i].pid;
+        cout << "Arrival Time: ";
+        cin >> proc[i].art;
+        cout << "Burst Time: ";
+        cin >> proc[i].bt;
+    }
+
+    int wt[n], tat[n];
+    findWaitingTime(proc, n, wt);
+    findTurnAroundTime(proc, n, wt, tat);
+
+    float total_wt = 0, total_tat = 0;
+    for (int i = 0; i < n; i++) {
+        total_wt += wt[i];
+        total_tat += tat[i];
+    }
+
+    cout << "Average waiting time = " << (float)total_wt / n << endl;
+    cout << "Average turnaround time = " << (float)total_tat / n << endl;
+}
+
+int main() {
+    int n; // Number of processes
+    cout << "Enter the number of processes: ";
+    cin >> n;
+
+    findAvgTime(n); // Calculate and display average times
+    return 0;
+}

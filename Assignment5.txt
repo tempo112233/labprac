@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> Login Form </title>
+</head>
+<body>
+<center>
+<h2 style="color: red;"> LOGIN FORM </h2>
+<div>
+<label for="username">Username:</label>
+<input type="text" id="username" name="username" required>
+</div>
+<br>
+<div>
+<label for="password">Password:</label>
+<input type="password" id="password" name="password" required>
+</div>
+<br>
+<div>
+<button type="submit" style="background-color: green;">SUBMIT</button>
+</div>
+</center>
+</body>
+</html>

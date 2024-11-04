@@ -1,0 +1,157 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+void InputSymbol(string sym[2][3]) {
+    cout << "\nEnter Symbol Table:\t";
+    for (int i = 0; i < 2; i++) {
+        cout << "\nEnter row " << i + 1 << " (Index, Symbol, Address): ";
+        for (int j = 0; j < 3; j++) {
+            cin >> sym[i][j];
+        }
+    }
+}
+
+void InputLiteral(string lit[2][3]) {
+    cout << "\nEnter Literal Table:\t";
+    for (int i = 0; i < 2; i++) {
+        cout << "\nEnter row " << i + 1 << " (Index, Literal, Address): ";
+        for (int j = 0; j < 3; j++) {
+            cin >> lit[i][j];
+        }
+    }
+}
+
+void Display(string sym[2][3], string lit[2][3]) {
+    cout << "\n-----------------------------------\n";
+    cout << "\nSymbol Table:\t";
+    cout << "\n-----------------------------------\n";
+    cout << "\nIndex\tSymbol\tAddress";
+    cout << "\n-----------------------------------\n";
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 3; j++) {
+            cout << sym[i][j] << "\t";
+        }
+        cout << endl;
+    }
+    cout << "\n------------------------------------\n";
+    cout << "\nLiteral Table:\t";
+    cout << "\n------------------------------------\n";
+    cout << "\nIndex\tLiteral\tAddress";
+    cout << "\n------------------------------------\n";
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 3; j++) {
+            cout << lit[i][j] << "\t";
+        }
+        cout << endl;
+    }
+}
+
+void PrintLiteral(string lit[2][3]) {
+    for (int i = 0; i < 2; i++) {
+        cout << "(DL,02) (C, " << lit[i][1] << ")" << endl;
+    }
+}
+
+void PrintLiteralIndex(string lit[2][3], const string& lit_val) {
+    for (int i = 0; i < 2; i++) {
+        if (lit[i][1] == lit_val) {
+            cout << "(L," << lit[i][0] << ")";
+            return;
+        }
+    }
+}
+
+void PrintSymbolIndex(string sym[2][3], const string& sym_val) {
+    bool found = false;
+    for (int i = 0; i < 2; i++) {
+        if (sym[i][1] == sym_val) {
+            cout << "(S," << sym[i][0] << ")";
+            found = true;
+            return;
+        }
+    }
+    if (!found) {
+        cout << "(C," << sym_val << ")";
+    }
+}
+
+void GenerateIntermediateCode(string mot[8][3], string sym[2][3], string lit[2][3], string inst[8][5]) {
+    int i = 0;
+    while (i < 8) {
+        int j = 0;
+        if (inst[i][j] == "start") {
+            cout << "(AD,01)" << endl;
+            i++;
+        } else if (inst[i][j] == "ltorg") {
+            cout << "(AD,04)" << endl;
+            PrintLiteral(lit);
+            i++;
+        } else {
+            while (j < 5 && inst[i][j] != "origin" && inst[i][j] != "ltorg") {
+                int m = 0;
+                while (m < 8) {
+                    if (inst[i][j] == mot[m][0]) {
+                        cout << "(" << mot[m][1] << "," << mot[m][2] << ")";
+                        break;
+                    }
+                    m++;
+                }
+
+                if (m < 8) {
+                    j++;
+                } else if (inst[i][j] == "2" || inst[i][j] == "1") {
+                    string lit_val = inst[i][j];
+                    PrintLiteralIndex(lit, lit_val);
+                    j++;
+                } else if (inst[i][j] == " " || inst[i][j] == "+" || inst[i][j] == "," || inst[i][j] == ",=") {
+                    j++;
+                    continue;
+                } else {
+                    string sym_val = inst[i][j];
+                    PrintSymbolIndex(sym, sym_val);
+                    j++;
+                }
+            }
+            i++;
+            cout << endl;
+        }
+    }
+}
+
+void NOT(string sym[2][3], string lit[2][3], string inst[8][5]) {
+    string mot[8][3] = {
+        {"start", "AD", "01"},
+        {"mover", "IS", "04"},
+        {"breg", "RG", "02"},
+        {"areg", "RG", "01"},
+        {"add", "IS", "01"},
+        {"origin", "AD", "03"},
+        {"dc", "DL", "02"},
+        {"ltorg", "AD", "04"}
+    };
+    GenerateIntermediateCode(mot, sym, lit, inst);
+}
+
+int main() {
+    string sym[2][3];
+    string lit[2][3];
+    string inst[8][5] = {
+        {"start", "100", " ", " ", " "},
+        {"mover", "breg", ",=", "2", " "},
+        {"loop", "mover", "areg", ",", "n"},
+        {"add", "breg", ",=", "1", " "},
+        {"origin", "loop", "+", "5", " "},
+        {"ltorg", " ", " ", " ", " "},
+        {"n", "dc", "5", " ", " "},
+        {"end", " ", " ", " ", " "}
+    };
+
+    InputSymbol(sym);
+    InputLiteral(lit);
+    Display(sym, lit);
+    NOT(sym, lit, inst);
+    
+    return 0;
+}

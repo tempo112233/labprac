@@ -1,0 +1,153 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct Process {
+    int processID;
+    int burstTime;
+    int tempBurstTime;
+    int responseTime;
+    int arrivalTime;
+    int priority;
+    int outTime;
+    int inTime;
+};
+
+// Function to insert a process into the min-heap
+void insert(Process Heap[], Process value, int* heapSize, int* currentTime) {
+    int start = *heapSize;
+    Heap[*heapSize] = value;
+    if (Heap[*heapSize].inTime == -1)
+        Heap[*heapSize].inTime = *currentTime;
+    ++(*heapSize);
+    while (start != 0 && Heap[(start - 1) / 2].priority > Heap[start].priority) {
+        swap(Heap[(start - 1) / 2], Heap[start]);
+        start = (start - 1) / 2;
+    }
+}
+
+// Function to maintain the heap property
+void order(Process Heap[], int* heapSize, int start) {
+    int smallest = start;
+    int left = 2 * start + 1;
+    int right = 2 * start + 2;
+
+    if (left < *heapSize && Heap[left].priority < Heap[smallest].priority)
+        smallest = left;
+    if (right < *heapSize && Heap[right].priority < Heap[smallest].priority)
+        smallest = right;
+
+    if (smallest != start) {
+        swap(Heap[smallest], Heap[start]);
+        order(Heap, heapSize, smallest);
+    }
+}
+
+// Function to extract the minimum process from the heap
+Process extractMinimum(Process Heap[], int* heapSize, int* currentTime) {
+    Process min = Heap[0];
+    if (min.responseTime == -1)
+        min.responseTime = *currentTime - min.arrivalTime;
+
+    --(*heapSize);
+    if (*heapSize > 0) {
+        Heap[0] = Heap[*heapSize];
+        order(Heap, heapSize, 0);
+    }
+
+    return min;
+}
+
+// Function to compare processes by arrival time
+bool compare(Process p1, Process p2) {
+    return (p1.arrivalTime < p2.arrivalTime);
+}
+
+// Function to perform scheduling
+void scheduling(Process Heap[], Process array[], int n, int* heapSize, int* currentTime) {
+    if (*heapSize == 0)
+        return;
+
+    Process min = extractMinimum(Heap, heapSize, currentTime);
+    min.outTime = *currentTime + 1; // Process finishes at current time + 1
+    --min.burstTime;
+
+    if (min.burstTime > 0) {
+        insert(Heap, min, heapSize, currentTime);
+    } else {
+        for (int i = 0; i < n; i++)
+            if (array[i].processID == min.processID) {
+                array[i] = min; // Update the process information
+                break;
+            }
+    }
+}
+
+// Function to implement priority scheduling
+void priority(Process array[], int n) {
+    std::sort(array, array + n, compare); // Sort processes by arrival time
+    int totalWaitingTime = 0, totalBurstTime = 0, totalTurnaroundTime = 0, insertedProcess = 0;
+    int heapSize = 0, currentTime = array[0].arrivalTime;
+    Process Heap[4 * n]; // Heap size could be maximally 4*n
+
+    for (int i = 0; i < n; i++) {
+        totalBurstTime += array[i].burstTime;
+        array[i].tempBurstTime = array[i].burstTime;
+    }
+
+    do {
+        // Insert new processes into the heap based on the current time
+        while (insertedProcess < n && array[insertedProcess].arrivalTime <= currentTime) {
+            array[insertedProcess].inTime = -1;
+            array[insertedProcess].responseTime = -1;
+            insert(Heap, array[insertedProcess], &heapSize, &currentTime);
+            ++insertedProcess;
+        }
+
+        // Perform scheduling
+        scheduling(Heap, array, n, &heapSize, &currentTime);
+        ++currentTime;
+
+    } while (heapSize > 0 || insertedProcess < n);
+
+    // Calculate total waiting time and turnaround time
+    for (int i = 0; i < n; i++) {
+        totalWaitingTime += (array[i].outTime - array[i].inTime - array[i].tempBurstTime);
+        totalTurnaroundTime += (array[i].outTime - array[i].arrivalTime);
+    }
+
+    cout << "Average waiting time = " << (float)totalWaitingTime / n << endl;
+    cout << "Average turnaround time = " << (float)totalTurnaroundTime / n << endl;
+}
+
+int main() {
+    int n;
+
+    cout << "Enter the number of processes: ";
+    cin >> n;
+
+    Process* a = new Process[n];
+
+    // Input processes from user
+    for (int i = 0; i < n; ++i) {
+        cout << "Enter details for Process " << (i + 1) << ":\n";
+        a[i].processID = i + 1; // Assign process ID (1, 2, 3, ...)
+        cout << "Arrival Time: ";
+        cin >> a[i].arrivalTime;
+        cout << "Burst Time: ";
+        cin >> a[i].burstTime;
+        cout << "Priority: ";
+        cin >> a[i].priority;
+        a[i].tempBurstTime = a[i].burstTime;
+        a[i].responseTime = -1;
+        a[i].outTime = -1;
+        a[i].inTime = -1;
+    }
+
+    priority(a, n);
+
+    delete[] a; // Free allocated memory
+    return 0;
+}

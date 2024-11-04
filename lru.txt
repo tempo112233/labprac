@@ -1,0 +1,75 @@
+#include <iostream>
+#include <unordered_set>
+#include <unordered_map>
+#include <iomanip>
+#include <vector>
+
+using namespace std;
+
+// Function to implement LRU page replacement
+void lru(int n, int frame_size, const vector<int>& pages) {
+    unordered_set<int> s; // Set to keep track of pages in memory
+    unordered_map<int, int> indexes; // Map to store the last index of pages
+    int page_hit = 0, page_fault = 0;
+
+    for (int i = 0; i < n; i++) {
+        // If the page is already in the set, it's a page hit
+        if (s.find(pages[i]) != s.end()) {
+            page_hit++;
+        } else {
+            // It's a page fault
+            page_fault++;
+            // If there is space in the frame
+            if (s.size() < frame_size) {
+                s.insert(pages[i]);
+            } else {
+                // Find the least recently used page
+                int lru_index = INT_MAX, lru_page;
+                for (const auto& it : s) {
+                    if (indexes[it] < lru_index) {
+                        lru_index = indexes[it];
+                        lru_page = it;
+                    }
+                }
+                // Remove the LRU page
+                s.erase(lru_page);
+                s.insert(pages[i]);
+            }
+        }
+        // Update the index of the current page
+        indexes[pages[i]] = i;
+    }
+
+    // Display results
+    cout << "\nTotal Page Hit: " << page_hit << endl;
+    cout << "Total Page Fault: " << page_fault << endl;
+    cout << "Page Hit Ratio: " << fixed << setprecision(2) << (static_cast<float>(page_hit) / n) * 100 << "%" << endl;
+    cout << "Page Fault Ratio: " << fixed << setprecision(2) << (static_cast<float>(page_fault) / n) * 100 << "%" << endl;
+}
+
+int main() {
+    int n, frame_size;
+
+    cout << "Enter the number of page references: ";
+    cin >> n;
+    if (n <= 0) {
+        cout << "Invalid input for number of page references!" << endl;
+        return 1;
+    }
+
+    cout << "Enter the frame size: ";
+    cin >> frame_size;
+    if (frame_size <= 0) {
+        cout << "Invalid input for frame size!" << endl;
+        return 1;
+    }
+
+    vector<int> pages(n);
+    cout << "Enter the page references: ";
+    for (int i = 0; i < n; i++) {
+        cin >> pages[i];
+    }
+
+    lru(n, frame_size, pages); // Call the LRU function
+    return 0;
+}
