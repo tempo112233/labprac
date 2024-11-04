@@ -1,0 +1,82 @@
+#include <iostream>
+#include <climits>
+using namespace std;
+
+int main() {
+    int n;
+    cout << "Enter number of processes: ";
+    cin >> n;
+
+    int at[n];  // Arrival Time
+    int bt[n];  // Burst Time
+    int rt[n];  // Remaining Time
+    int ct[n];  // Completion Time
+    int tat[n]; // Turnaround Time
+    int wt[n];  // Waiting Time
+
+    // Input Arrival Time (AT) and Burst Time (BT)
+    for (int i = 0; i < n; i++) {
+        cout << "Enter Arrival Time (AT) for P" << i + 1 << ": ";
+        cin >> at[i];
+        cout << "Enter Burst Time (BT) for P" << i + 1 << ": ";
+        cin >> bt[i];
+        rt[i] = bt[i]; // Initialize remaining time to burst time
+    }
+
+    int complete = 0, time = 0, minRt = INT_MAX;
+    int shortest = 0;
+    bool check = false;
+
+    // SRTF Scheduling Logic
+    while (complete != n) {
+        for (int j = 0; j < n; j++) {
+            // Select the process with the shortest remaining time that has arrived
+            if (at[j] <= time && rt[j] < minRt && rt[j] > 0) {
+                minRt = rt[j];
+                shortest = j;
+                check = true;
+            }
+        }
+
+        // If no process is ready to execute, increment time
+        if (!check) {
+            time++;
+            continue;
+        }
+
+        // Execute the selected process for 1 time unit
+        rt[shortest]--;
+        minRt = rt[shortest];
+
+        // If the process has finished execution
+        if (minRt == 0) {
+            minRt = INT_MAX;
+        }
+
+        if (rt[shortest] == 0) {
+            complete++;
+            check = false;
+            ct[shortest] = time + 1; // Completion time = current time + 1
+            tat[shortest] = ct[shortest] - at[shortest]; // Turnaround time = Completion Time - Arrival Time
+            wt[shortest] = tat[shortest] - bt[shortest]; // Waiting time = Turnaround Time - Burst Time
+        }
+
+        time++; // Increment time
+    }
+
+    // Output results
+    cout << "Process    BT    AT    WT    TAT" << endl;
+    float totalWT = 0, totalTAT = 0;
+
+    for (int i = 0; i < n; i++) {
+        totalWT += wt[i];
+        totalTAT += tat[i];
+        cout << "P" << i + 1 << "        " << bt[i] << "     " << at[i] << "     " << wt[i] << "     " << tat[i] << endl;
+    }
+
+    // Calculate and display average waiting time and average turnaround time
+    cout << "Average Waiting Time (WT): " << (totalWT / n) << endl;
+    cout << "Average Turnaround Time (TAT): " << (totalTAT / n) << endl;
+
+    return 0;
+}
